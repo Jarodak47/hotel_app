@@ -21,12 +21,12 @@ def read_chambres(
     current_user: models.User = Depends(dependencies.get_current_active_superuser),
 ) -> Any:
     """
-    Retrieve users.
+    Retrieve room.
     """
     chambres = crud.chambre.get_multi(db, skip=skip, limit=limit)
     return chambres
 
-@router.get("/", response_model=List[schemas.Chambre])
+@router.get("/by-statut{bool}", response_model=List[schemas.Chambre])
 def read_chambres_by_statut(
     db: Session = Depends(dependencies.get_db),
     skip: int = 0,
@@ -38,8 +38,42 @@ def read_chambres_by_statut(
     Retrieve room.
     """
     chambres = crud.chambre.get_by_est_libre(db,est_libre)
-    chambres = crud.chambre.get_multi(db, skip=skip, limit=limit)
     return chambres
+
+
+@router.get("/by-type{str}", response_model=List[schemas.Chambre])
+def read_chambres_by_type(
+    db: Session = Depends(dependencies.get_db),
+    skip: int = 0,
+    limit: int = 100,
+    type_de_chambre : str = None,
+    current_user: models.User = Depends(dependencies.get_current_active_superuser),
+) -> Any:
+    """
+    Retrieve room.
+    """
+    chambres = crud.chambre.get_by_type(db,type_de_chambre)
+    return chambres
+
+
+@router.get("/by-code_chambre{str}", response_model=schemas.Chambre)
+def read_chambre_by_code_(
+    code_chambre : str ,
+    db: Session = Depends(dependencies.get_db),
+    current_user: models.User = Depends(dependencies.get_current_active_superuser),
+) -> Any:
+    """
+    Retrieve room.
+    """
+    chambre = crud.chambre.get_by_code(db,code_chambre=code_chambre)
+    if not chambre:
+        raise HTTPException(
+            status_code=404, detail="This room code doesn't exists in the system"
+        )
+    return chambre
+
+
+
 
 @router.post("/", response_model=schemas.Chambre)
 def create_chambre(
@@ -51,14 +85,14 @@ def create_chambre(
     """
     Create new chambre.
     """
-    chambre = crud.chambre.get_by_numero(db, numero_de_chambre=chambre_in.numero_de_chambre)
+    chambre = crud.chambre.get_by_code(db, code_chambre=chambre_in.code_chambre)
     if chambre:
         raise HTTPException(
             status_code=400,
-            detail="The room with this numero already exists in the system.",
+            detail="The room with this code already exists in the system.",
         )
     chambre = crud.chambre.create(db, obj_in=chambre_in)
-    return user
+    return chambre
 
 
 @router.get("/{chambre_id}", response_model=schemas.Chambre)
@@ -85,15 +119,22 @@ def update_chambre(
     chambre_id: int,
     chambre_in: schemas.ChambreUpdate,
     current_user: models.User = Depends(dependencies.get_current_active_superuser),
-) -> Any:
+    ) -> Any:
     """
     Update a room.
     """
     chambre = crud.chambre.get(db, id=chambre_id)
     if not chambre:
         raise HTTPException(
-            status_code=404,
-            detail="The room with this id does not exist in the system",
+            status_code=404,detail="The room with this id does not exist in the system",
+    )
+    else:
+        code_chambre = crud.chambre.get_by_code_chambre(db, code_chambre=chambre_in.code_chambre)
+    if code_chambre and code_chambre.id != chambre_id:
+        raise HTTPException(status_code=400,detail="This room code already exists in the system",
         )
     chambre = crud.chambre.update(db, db_obj=chambre, obj_in=chambre_in)
     return chambre
+
+
+

@@ -26,8 +26,7 @@ class UserUpdate(UserBase):
 
 class UserInDBBase(UserBase):
     id: Optional[int] = None
-    last_connexion_date : str = None
-    last_connexion_date : str = None
+    
 
 
     class Config:

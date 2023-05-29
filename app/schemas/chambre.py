@@ -5,14 +5,16 @@ from pydantic import BaseModel
 
 # Shared properties
 class ChambreBase(BaseModel):
-    numero_de_chambre: Optional[int] = None
+    code_chambre: Optional[str] = None
     est_libre: Optional[bool] = True
     description: Optional[str] = None
+    type_de_chambre: Optional[str] = None
+    unit_price : Optional[float] = None
 
 
 # Properties to receive via API on creation
 class ChambreCreate(ChambreBase):
-    pass
+    code_chambre : str
 
 
 # Properties to receive via API on update
@@ -22,8 +24,7 @@ class ChambreUpdate(ChambreBase):
 
 class ChambreInDBBase(ChambreBase):
     id: Optional[int] = None
-    created_date: str = None
-    last_update_date: str = None
+    
 
     class Config:
         orm_mode = True

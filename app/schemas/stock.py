@@ -4,25 +4,27 @@ from pydantic import BaseModel
 
 # Shared properties
 class StockBase(BaseModel):
-    title: Optional[str] = None
+    code_stock: Optional[str] = None
     est_disponible: Optional[bool] = True
     description: Optional[str] = None
+    unit_price: Optional[float] = None
+    stock_type: Optional[str] = None
 
 
 # Properties to receive via API on creation
 class StockCreate(StockBase):
-    pass
+    code_stock : str
+    
 
 
 # Properties to receive via API on update
 class StockUpdate(StockBase):
-    pass
+    unit_price : Optional[float] = None
 
 
 class StockInDBBase(StockBase):
     id: Optional[int] = None
-    created_date : str = None
-    updated_date: str = None
+
 
     class Config:
         orm_mode = True
