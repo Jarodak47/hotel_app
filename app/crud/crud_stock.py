@@ -13,6 +13,10 @@ class CRUDStock(CRUDBase[Stock, StockCreate, StockUpdate]):
     def get_by_est_disponible(self, db: Session,est_disponible: bool) -> Optional[List[Stock]]:
         return db.query(Stock).filter(Stock.est_disponible == est_disponible).all()
 
+    def get_by_type(self, db: Session,*,type_de_produit: Optional[List[str]]= None) -> Optional[List[Stock]]: 
+        # Utiliser le type List[TypeDeChambre] ici
+        return db.query(Chambre).filter(Chambre.type_de_chambre.in_(type_de_chambre)).all() # Utiliser la méthode in_ ici
+
     def get_by_code(self, db: Session,*,code_stock : str) -> Optional[Stock]:
         return db.query(Stock).filter(Stock.code_stock == code_stock).first()
 
@@ -21,7 +25,7 @@ class CRUDStock(CRUDBase[Stock, StockCreate, StockUpdate]):
             code_stock=obj_in.code_stock,
             est_disponible = obj_in.est_disponible,
             description=obj_in.description,
-            stock_type = obj_in.stock_type,
+            type_de_produit = obj_in.type_de_produit,
             unit_price=obj_in.unit_price,
         )
         db.add(db_obj)

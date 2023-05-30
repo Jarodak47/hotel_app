@@ -1,11 +1,12 @@
-from typing import Any, List
+from typing import Any, List,Optional
 
-from fastapi import APIRouter, Body, Depends, HTTPException
+from fastapi import APIRouter, Body, Depends, HTTPException,Query,Body
 from fastapi.encoders import jsonable_encoder
 from pydantic.networks import EmailStr
 from sqlalchemy.orm import Session
 
 import crud, models, schemas
+from schemas.stock import TypeDeProduit
 from core import dependencies
 from core.config import settings
 from utils import send_new_account_email
@@ -26,7 +27,7 @@ def read_stock(
     stock = crud.stock.get_multi(db, skip=skip, limit=limit)
     return stock
 
-@router.get("/by-disponibilite{bool}", response_model=List[schemas.Stock])
+@router.get("/by-disponibilite{est_disponible}", response_model=List[schemas.Stock])
 def read_stock_by_disponibilite(
     db: Session = Depends(dependencies.get_db),
     skip: int = 0,
@@ -44,7 +45,7 @@ def read_stock_by_disponibilite(
 def create_stock(
     *,
     db: Session = Depends(dependencies.get_db),
-    stock_in: schemas.StockCreate,
+    stock_in:schemas.StockCreate,
     current_user: models.User = Depends(dependencies.get_current_active_superuser),
 ) -> Any:
     """
@@ -98,9 +99,26 @@ def read_stock_by_code(
     # Retourner le produit trouvé
     return stock
 
+@router.get("/by-type", response_model=Optional[List[schemas.Stock]]) 
+def read_stock_by_type(
+    db: Session = Depends(dependencies.get_db),
+    skip: int = 0,
+    limit: int = 100,
+    type_de_produit : Optional[List[TypeDeProduit]]= Query(None), # Mettre le paramètre type_de_chambre dans la requête
+    current_user: models.User = Depends(dependencies.get_current_active_superuser),
+    ) -> Any:
+    """
+    Retrieve room.
+    """
+    stock = crud.stock.get_by_type(db,type_de_produit=type_de_produit)
+    if not stock:
+        raise HTTPException(
+            status_code=404, detail="product's  of this(those) type doesn't exists in the system"
+        )
+    return stock
 
 
-@router.put("/{stock_id}", response_model=schemas.Stock)
+@router.put("/{stock_id:int}", response_model=schemas.Stock)
 def update_stock(
     *,
     db: Session = Depends(dependencies.get_db),

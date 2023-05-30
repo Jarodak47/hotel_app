@@ -1,11 +1,12 @@
-from typing import Any, List
+from typing import Any, List,Optional
 
-from fastapi import APIRouter, Body, Depends, HTTPException
+from fastapi import APIRouter, Body, Depends, HTTPException,Query 
 from fastapi.encoders import jsonable_encoder
 from pydantic.networks import EmailStr
 from sqlalchemy.orm import Session
 
 import crud, models, schemas
+from schemas import types_de_chambre,TypeDeChambre
 from core import dependencies
 from core.config import settings
 from utils import send_new_account_email
@@ -26,7 +27,7 @@ def read_chambres(
     chambres = crud.chambre.get_multi(db, skip=skip, limit=limit)
     return chambres
 
-@router.get("/by-statut{bool}", response_model=List[schemas.Chambre])
+@router.get("/by-statut{est_libre}", response_model=List[schemas.Chambre])
 def read_chambres_by_statut(
     db: Session = Depends(dependencies.get_db),
     skip: int = 0,
@@ -41,22 +42,27 @@ def read_chambres_by_statut(
     return chambres
 
 
-@router.get("/by-type{str}", response_model=List[schemas.Chambre])
+@router.get("/by-type", response_model=Optional[List[schemas.Chambre]]) # Enlever le paramètre type_de_chambre du chemin et utiliser le symbole /
 def read_chambres_by_type(
     db: Session = Depends(dependencies.get_db),
     skip: int = 0,
     limit: int = 100,
-    type_de_chambre : str = None,
+    type_de_chambre : Optional[List[TypeDeChambre]]= Query(None), # Mettre le paramètre type_de_chambre dans la requête
     current_user: models.User = Depends(dependencies.get_current_active_superuser),
-) -> Any:
+    ) -> Any:
     """
     Retrieve room.
     """
-    chambres = crud.chambre.get_by_type(db,type_de_chambre)
+    chambres = crud.chambre.get_by_type(db,type_de_chambre = type_de_chambre)
+    if not chambres:
+        raise HTTPException(
+            status_code=404, detail="A room  with this(those) type doesn't exists in the system"
+        )
     return chambres
 
 
-@router.get("/by-code_chambre{str}", response_model=schemas.Chambre)
+
+@router.get("/by-code_chambre{code_chambre:str}", response_model=schemas.Chambre)
 def read_chambre_by_code_(
     code_chambre : str ,
     db: Session = Depends(dependencies.get_db),
@@ -75,7 +81,7 @@ def read_chambre_by_code_(
 
 
 
-@router.post("/", response_model=schemas.Chambre)
+@router.post("/")
 def create_chambre(
     *,
     db: Session = Depends(dependencies.get_db),
@@ -95,7 +101,7 @@ def create_chambre(
     return chambre
 
 
-@router.get("/{chambre_id}", response_model=schemas.Chambre)
+@router.get("/{chambre_id:int}", response_model=schemas.Chambre)
 def read_chambre_by_id(
     chambre_id: int,
     current_user: models.User = Depends(dependencies.get_current_active_user),
@@ -112,7 +118,7 @@ def read_chambre_by_id(
     return chambre
 
 
-@router.put("/{chambre_id}", response_model=schemas.Chambre)
+@router.put("/", response_model=schemas.Chambre)
 def update_chambre(
     *,
     db: Session = Depends(dependencies.get_db),
