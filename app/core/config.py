@@ -35,7 +35,7 @@ class Settings(BaseSettings):
 
 #postgresql://postgres:<password>@localhost/<name_of_the_datbase>
     # SQLALCHEMY_DATABASE_URI = "mysql://user:root/microservice"
-    SQLALCHEMY_DATABASE_URI = "sqlite:///./app.db_sqlite3"
+    SQLALCHEMY_DATABASE_URI = "sqlite:///./facturation.db"
 
     @validator("SQLALCHEMY_DATABASE_URI", pre=True)
     def assemble_db_connection(cls, v: Optional[str], values: Dict[str, Any]) -> Any:
